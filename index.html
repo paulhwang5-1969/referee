@@ -1,0 +1,282 @@
+TEST123<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>裁判排班表</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f4f5f2;--card:#fff;--ink:#1d2421;--mute:#68716c;--line:#dfe3de;--acc:#1f6f4a;--acc2:#e7f2ec;--warn:#b4561b;--warnbg:#fdf1e7;--err:#b3261e;--errbg:#fbeaea;--ok:#1f6f4a}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans TC",system-ui,sans-serif;font-size:15px;line-height:1.5}
+header{position:sticky;top:0;z-index:5;background:var(--ink);color:#fff;display:flex;align-items:center;gap:12px;padding:10px 18px;flex-wrap:wrap}
+header h1{font-size:18px;margin:0;font-weight:700;letter-spacing:.05em}
+header .sp{flex:1}
+#status{font-size:13px;opacity:.85}
+.wrap{display:grid;grid-template-columns:240px minmax(0,1fr);gap:16px;padding:16px;max-width:1200px;margin:0 auto}
+@media(max-width:820px){.wrap{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:16px}
+.card h2{font-size:15px;margin:0 0 10px;font-weight:700;display:flex;align-items:center;gap:8px}
+.card h2 small{font-weight:400;color:var(--mute);font-size:12px}
+button{font:inherit;border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:7px;padding:6px 12px;cursor:pointer}
+button:hover{border-color:var(--acc)}
+button.pri{background:var(--acc);border-color:var(--acc);color:#fff}
+button.pri:hover{filter:brightness(1.1)}
+button.ghost{border-color:transparent;background:transparent;color:var(--mute);padding:4px 8px}
+button.ghost:hover{color:var(--err)}
+header button,header .btnlike{font:inherit;background:transparent;color:#fff;border:1px solid #ffffff55;border-radius:7px;padding:6px 12px;cursor:pointer}
+header button.pri{background:#3fa66f;border-color:#3fa66f}
+input,select{font:inherit;border:1px solid var(--line);border-radius:7px;padding:6px 8px;background:#fff;color:var(--ink);min-width:0}
+input:focus,select:focus{outline:2px solid var(--acc2);border-color:var(--acc)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:end}
+.fld{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--mute)}
+.fld input,.fld select{font-size:15px;color:var(--ink)}
+.list{display:flex;flex-direction:column;gap:6px}
+.li{display:flex;align-items:center;justify-content:space-between;border:1px solid var(--line);border-radius:8px;padding:8px 10px;cursor:pointer;background:#fff}
+.li.on{border-color:var(--acc);background:var(--acc2)}
+.li b{display:block;font-size:14px}
+.li span{font-size:12px;color:var(--mute)}
+table{width:100%;border-collapse:collapse}
+th{font-size:12px;color:var(--mute);font-weight:500;text-align:left;padding:4px 6px;border-bottom:1px solid var(--line)}
+td{padding:5px 6px;border-bottom:1px solid #eef0ec;vertical-align:middle}
+td.n{font-weight:700;width:36px}
+td input.t{width:64px}
+@media(max-width:600px){td{padding:4px 2px}td select{font-size:14px;padding:6px 4px}}
+td select{width:100%}
+tr.bad td{background:var(--errbg)}
+.msg{font-size:12px;color:var(--err)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:center;gap:4px;background:var(--acc2);border-radius:20px;padding:3px 4px 3px 10px;font-size:14px}
+.chip button{border:0;background:transparent;padding:0 6px;color:var(--mute)}
+.chip.x{background:var(--warnbg)}
+.stat td{font-size:14px}
+.tag{font-size:12px;border-radius:5px;padding:1px 6px;margin-left:4px;white-space:nowrap}
+.tag.w{background:var(--warnbg);color:var(--warn)}
+.tag.e{background:var(--errbg);color:var(--err)}
+.tag.o{background:var(--acc2);color:var(--ok)}
+pre{background:#f7f8f6;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-family:inherit;white-space:pre-wrap;margin:0 0 10px}
+.note{font-size:12px;color:var(--mute)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:820px){.grid2{grid-template-columns:1fr}}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:8px 16px;border-radius:8px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:20}
+.toast.show{opacity:1}
+.modal{position:fixed;inset:0;background:#0006;display:none;align-items:center;justify-content:center;z-index:30}
+.modal.show{display:flex}
+.modal .box{background:#fff;border-radius:10px;padding:18px;max-width:340px;width:90%}
+.modal .box p{margin:0 0 14px}
+.lock{width:16px;height:16px;accent-color:var(--acc)}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script type="application/json" id="state">{"savedAt":0,"referees":["黃弘政","王振力","沈啓榮","吳正義"],"pairs":[["王振力","吳正義"]],"schedules":[{"id":"s1","date":"2026-11-29","league":"樹林聯賽","venue":"C球場","start":"08:00","interval":55,"unavail":{"王振力":"4,5"},"games":[{"time":"08:00","a":"黃弘政","b":"吳正義","lock":true},{"time":"08:55","a":"黃弘政","b":"王振力","lock":false},{"time":"09:50","a":"王振力","b":"沈啓榮","lock":false},{"time":"10:45","a":"沈啓榮","b":"吳正義","lock":false},{"time":"11:40","a":"黃弘政","b":"吳正義","lock":false},{"time":"12:35","a":"黃弘政","b":"王振力","lock":false},{"time":"13:30","a":"王振力","b":"沈啓榮","lock":false},{"time":"14:25","a":"沈啓榮","b":"吳正義","lock":false},{"time":"15:20","a":"黃弘政","b":"吳正義","lock":false}]}]}</script>
+<script id="app-js">
+(function(){
+"use strict";
+var state=JSON.parse(document.getElementById('state').textContent);
+var cur=state.schedules.length?state.schedules[0].id:null;
+var DKEY='refsched-data', storeOK=true;
+try{var d=JSON.parse(localStorage.getItem(DKEY)||'null');if(d&&d.state&&d.state.schedules){state=d.state;cur=d.cur||cur;}}catch(e){storeOK=false}
+
+function h(tag,attrs){var el=document.createElement(tag);if(attrs)for(var k in attrs){var v=attrs[k];if(v==null||v===false)continue;if(k==='text')el.textContent=v;else if(k.slice(0,2)==='on')el.addEventListener(k.slice(2),v);else if(k==='value')el.value=v;else if(k==='checked')el.checked=!!v;else el.setAttribute(k,v===true?'':v);}for(var i=2;i<arguments.length;i++){var c=arguments[i];if(c==null||c===false)continue;if(Array.isArray(c))c.forEach(function(x){if(x!=null&&x!==false)el.appendChild(typeof x==='string'?document.createTextNode(x):x)});else el.appendChild(typeof c==='string'?document.createTextNode(c):c);}return el;}
+function sch(){return state.schedules.find(function(s){return s.id===cur})}
+function uid(){return 's'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
+function toast(t){var el=document.getElementById('toast');el.textContent=t;el.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(function(){el.classList.remove('show')},1800)}
+function ask(text,okText,fn){var m=document.getElementById('modal');var box=m.querySelector('.box');box.innerHTML='';box.appendChild(h('p',{text:text}));box.appendChild(h('div',{class:'row',style:'justify-content:flex-end'},h('button',{text:'取消',onclick:function(){m.classList.remove('show')}}),h('button',{class:'pri',text:okText,onclick:function(){m.classList.remove('show');fn()}})));m.classList.add('show')}
+function persist(){try{localStorage.setItem(DKEY,JSON.stringify({state:state,cur:cur}));storeOK=true}catch(e){storeOK=false}}
+function touch(){persist();updStatus()}
+function updStatus(){var s=document.getElementById('status');if(!s)return;s.textContent=storeOK?'✓ 已自動儲存在這台裝置':'⚠ 此瀏覽器無法儲存，請用「備份」保存資料'}
+function dl(name,text,type){try{var b=new Blob([text],{type:type});var u=URL.createObjectURL(b);var a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(u);a.remove()},500)}catch(e){toast('此瀏覽器無法下載，請改用 Chrome 或 Safari 開啟')}}
+function backup(){var t=new Date();var n='裁判排班備份_'+t.getFullYear()+String(t.getMonth()+1).padStart(2,'0')+String(t.getDate()).padStart(2,'0')+'.json';dl(n,JSON.stringify({app:'refsched',v:1,state:state},null,1),'application/json');toast('已下載備份檔')}
+function restore(file){var r=new FileReader();r.onload=function(){try{var d=JSON.parse(r.result);var st=d.state||d;if(!st.schedules||!st.referees)throw 0;ask('匯入後會取代這台裝置上目前的所有班表，確定嗎？','匯入',function(){state=st;cur=state.schedules.length?state.schedules[0].id:null;touch();render();toast('已匯入')})}catch(e){toast('檔案格式不正確')}};r.readAsText(file)}
+function addMin(t,m){var p=(t||'08:00').split(':');var x=(+p[0])*60+(+p[1])+m;x=((x%1440)+1440)%1440;return String(Math.floor(x/60)).padStart(2,'0')+':'+String(x%60).padStart(2,'0')}
+function parseGames(str,n){var out={};String(str||'').split(/[,，、\s]+/).forEach(function(p){if(!p)return;var m=p.match(/^(\d+)\s*[-~～]\s*(\d+)$/);if(m){for(var i=+m[1];i<=+m[2];i++)out[i]=1}else if(/^\d+$/.test(p))out[+p]=1});return out}
+function normTime(v){var m=String(v||'').trim().replace('：',':').match(/^(\d{1,2}):?(\d{2})$/);if(!m||+m[1]>23||+m[2]>59)return'';return m[1].padStart(2,'0')+':'+m[2]}
+function fmtDate(d){if(!d)return'';var p=d.split('-');if(p.length<3)return d;return (+p[1])+'/'+(+p[2])}
+function wk(d){try{var x=new Date(d+'T00:00:00');return '日一二三四五六'[x.getDay()]}catch(e){return''}}
+function forbid(a,b){return state.pairs.some(function(p){return (p[0]===a&&p[1]===b)||(p[0]===b&&p[1]===a)})}
+
+// ---------- analysis ----------
+function analyze(s){
+  var N=s.games.length, refs={}, rowErr=[];
+  var un={};Object.keys(s.unavail||{}).forEach(function(r){un[r]=parseGames(s.unavail[r])});
+  s.games.forEach(function(g,i){var e=[];var n=i+1;
+    if(g.a&&g.b&&g.a===g.b)e.push('同一人重複');
+    if(g.a&&g.b&&forbid(g.a,g.b))e.push(g.a+'、'+g.b+' 不可同場');
+    [g.a,g.b].forEach(function(r){if(r&&un[r]&&un[r][n])e.push(r+' 第'+n+'場不可排')});
+    if(!g.a||!g.b)e.push('尚未排滿');
+    rowErr.push(e);
+    [g.a,g.b].forEach(function(r){if(!r)return;(refs[r]=refs[r]||[]).push(n)});
+  });
+  var stats=state.referees.concat(Object.keys(refs).filter(function(r){return state.referees.indexOf(r)<0})).map(function(r){
+    var gs=(refs[r]||[]).slice().sort(function(a,b){return a-b});var runs=[];gs.forEach(function(n){var l=runs[runs.length-1];if(l&&l[l.length-1]===n-1)l.push(n);else if(!l||l[l.length-1]!==n)runs.push([n])});
+    return {name:r,games:gs,runs:runs};
+  });
+  return {rowErr:rowErr,stats:stats};
+}
+
+// ---------- solver ----------
+function solve(s,shuffle){
+  var refs=state.referees.slice(), R=refs.length, N=s.games.length;
+  if(R<2||N<1)return null;
+  var un=refs.map(function(r){return parseGames((s.unavail||{})[r])});
+  var cand=[];
+  for(var g=0;g<N;g++){var G=s.games[g];var list=[];
+    for(var i=0;i<R;i++)for(var j=i+1;j<R;j++){
+      if(forbid(refs[i],refs[j]))continue;
+      if(un[i][g+1]||un[j][g+1])continue;
+      if(G.lock){var want=[G.a,G.b].filter(Boolean);var ok=want.every(function(w){return w===refs[i]||w===refs[j]});if(!ok)continue;}
+      list.push([i,j]);
+    }
+    if(!list.length)return {fail:'第'+(g+1)+'場找不到符合條件的裁判組合'};
+    cand.push(list);
+  }
+  function pen(len,st,en){if(len===2)return 0;if(len===1)return (st===0||en===N-1)?8:10;if(len===3)return 30;return 1000}
+  var run=new Array(R).fill(0), rs=new Array(R).fill(0), cnt=new Array(R).fill(0);
+  var pool=[], pick=new Array(N), best=Infinity, bestPick=null, nodes=0, LIMIT=400000;
+  var avail=refs.map(function(_,i){for(var g=1;g<=N;g++)if(!un[i][g])return true;return false});
+  function dfs(g,cost){
+    if((shuffle?cost>best:cost>=best)||nodes++>LIMIT)return;
+    if(g===N){var c=cost;for(var i=0;i<R;i++)if(run[i])c+=pen(run[i],rs[i],N-1);
+      var mx=-1,mn=1e9;for(i=0;i<R;i++)if(avail[i]){mx=Math.max(mx,cnt[i]);mn=Math.min(mn,cnt[i])}c+=(mx-mn)*4;
+      if(c<best){best=c;bestPick=pick.slice();pool=[bestPick]}else if(shuffle&&c===best&&pool.length<200){pool.push(pick.slice())}return}
+    var opts=cand[g].map(function(p){var d=0,bad=false;for(var i=0;i<R;i++){var inn=(i===p[0]||i===p[1]);if(inn){if(run[i]>=3)bad=true;else if(run[i]===2)d+=30}else if(run[i])d+=pen(run[i],rs[i],g-1)}return {p:p,d:bad?1e9:d,r:shuffle?Math.random():0}}).filter(function(o){return o.d<1e9});
+    opts.sort(function(a,b){return a.d-b.d||a.r-b.r});
+    for(var k=0;k<opts.length;k++){var o=opts[k],p=o.p;
+      var sr=run.slice(),ss=rs.slice(),add=0;
+      for(var i=0;i<R;i++){var inn=(i===p[0]||i===p[1]);if(inn){if(!run[i])rs[i]=g;run[i]++;cnt[i]++}else if(run[i]){add+=pen(run[i],rs[i],g-1);run[i]=0}}
+      pick[g]=p;dfs(g+1,cost+add);
+      for(i=0;i<R;i++)if(i===p[0]||i===p[1])cnt[i]--;
+      run=sr;rs=ss;
+    }
+  }
+  dfs(0,0);
+  if(!bestPick)return {fail:'找不到符合條件的排法，請放寬條件'};
+  if(shuffle&&pool.length>1){var curKey=s.games.map(function(g){return [g.a,g.b].sort().join('+')}).join('|');var alt=pool.filter(function(pk){return pk.map(function(p){return [refs[p[0]],refs[p[1]]].sort().join('+')}).join('|')!==curKey});if(alt.length)bestPick=alt[Math.floor(Math.random()*alt.length)]}
+  return {pick:bestPick.map(function(p){return [refs[p[0]],refs[p[1]]]})};
+}
+
+// ---------- output ----------
+function fallbackCopy(t){var ta=document.createElement('textarea');ta.value=t;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();var ok=false;try{ok=document.execCommand('copy')}catch(e){}ta.remove();toast(ok?'已複製':'無法自動複製，請長按上方文字複製')}
+function lineText(s){var t=fmtDate(s.date)+'號\n'+(s.league||'')+(s.venue?':'+s.venue:'')+'\n出勤裁判\n';s.games.forEach(function(g,i){t+=(i+1)+'.'+g.time+' '+(g.a||'—')+' '+(g.b||'—')+'\n'});return t.trim()}
+function csv(s){var q=function(v){v=String(v==null?'':v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v};var rows=[['日期','聯賽','場地','場次','時間','裁判1','裁判2']];s.games.forEach(function(g,i){rows.push([s.date,s.league,s.venue,i+1,g.time,g.a,g.b])});return '﻿'+rows.map(function(r){return r.map(q).join(',')}).join('\r\n')}
+
+// ---------- render ----------
+function render(){
+  var app=document.getElementById('app');app.innerHTML='';
+  app.appendChild(h('header',null,h('h1',{text:'裁判排班表'}),h('span',{class:'sp'}),h('span',{id:'status'}),h('button',{text:'備份',title:'下載所有班表的備份檔',onclick:backup}),h('label',{class:'btnlike',title:'從備份檔匯入'},'匯入',h('input',{type:'file',accept:'.json,application/json',style:'display:none',onchange:function(e){if(e.target.files[0])restore(e.target.files[0]);e.target.value=''}}))));
+  var wrap=h('div',{class:'wrap'});app.appendChild(wrap);
+  wrap.appendChild(sidebar());
+  var main=h('div');wrap.appendChild(main);
+  var s=sch();
+  if(!s){main.appendChild(h('div',{class:'card'},h('p',{text:'還沒有班表，按左邊「＋ 新增班表」開始。'})));}
+  else{var A=analyze(s);main.appendChild(infoCard(s));main.appendChild(tableCard(s,A));
+    main.appendChild(h('div',{class:'grid2'},statCard(s,A),outCard(s)));main.appendChild(condCard(s));}
+  main.appendChild(refCard());
+  updStatus();
+}
+function sidebar(){
+  var box=h('div');var c=h('div',{class:'card'},h('h2',{text:'班表'}));
+  c.appendChild(h('div',{class:'row',style:'margin-bottom:10px'},h('button',{class:'pri',text:'＋ 新增班表',onclick:function(){newSched(null)}})));
+  var list=h('div',{class:'list'});
+  state.schedules.slice().sort(function(a,b){return (b.date||'').localeCompare(a.date||'')}).forEach(function(s){
+    list.appendChild(h('div',{class:'li'+(s.id===cur?' on':''),onclick:function(){cur=s.id;render()}},
+      h('div',null,h('b',{text:(s.date||'未填日期')+(s.date?'（'+wk(s.date)+'）':'')}),h('span',{text:[s.league,s.venue].filter(Boolean).join(' · ')+' · '+s.games.length+'場'})),
+      h('button',{class:'ghost',title:'刪除',text:'✕',onclick:function(e){e.stopPropagation();ask('刪除「'+(s.date||'')+' '+(s.venue||'')+'」這份班表？','刪除',function(){state.schedules=state.schedules.filter(function(x){return x!==s});if(cur===s.id)cur=state.schedules.length?state.schedules[0].id:null;touch();render()})}})));
+  });
+  if(!state.schedules.length)list.appendChild(h('span',{class:'note',text:'尚無班表'}));
+  c.appendChild(list);box.appendChild(c);return box;
+}
+function newSched(from){
+  var s;if(from){s=JSON.parse(JSON.stringify(from));s.id=uid();if(s.date){var d=new Date(s.date+'T00:00:00');d.setDate(d.getDate()+7);s.date=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}s.games.forEach(function(g){g.a='';g.b='';g.lock=false});s.unavail={};}
+  else{var last=sch();s={id:uid(),date:'',league:last?last.league:'',venue:last?last.venue:'',start:'08:00',interval:55,unavail:{},games:[]};for(var i=0;i<9;i++)s.games.push({time:addMin('08:00',55*i),a:'',b:'',lock:false});}
+  state.schedules.push(s);cur=s.id;touch();render();toast(from?'已複製為下週班表，日期與裁判請確認':'已新增班表');
+}
+function infoCard(s){
+  var c=h('div',{class:'card'},h('h2',{text:'基本資料'}));
+  function f(label,key,type,extra){return h('label',{class:'fld'},label,h('input',Object.assign({type:type||'text',value:s[key]==null?'':s[key],onchange:function(e){s[key]=type==='number'?+e.target.value:e.target.value;touch();render()}},extra||{})))}
+  c.appendChild(h('div',{class:'row'},f('日期','date','date'),f('聯賽名稱','league','text',{placeholder:'例：樹林聯賽',style:'width:150px'}),f('場地','venue','text',{placeholder:'例：C球場',style:'width:110px'})));
+  var startI=h('input',{type:'text',inputmode:'numeric',placeholder:'08:00',style:'width:80px',value:s.start||'08:00'}),intI=h('input',{type:'number',min:10,max:240,value:s.interval||55,style:'width:80px'}),nI=h('input',{type:'number',min:1,max:20,value:s.games.length||9,style:'width:70px'});
+  c.appendChild(h('div',{class:'row',style:'margin-top:12px'},h('label',{class:'fld'},'第一場時間',startI),h('label',{class:'fld'},'每場間隔（分）',intI),h('label',{class:'fld'},'場數',nI),
+    h('button',{text:'套用場次與時間',onclick:function(){var n=Math.max(1,Math.min(20,+nI.value||1));s.start=normTime(startI.value)||'08:00';s.interval=+intI.value||55;while(s.games.length<n)s.games.push({time:'',a:'',b:'',lock:false});s.games.length=n;s.games.forEach(function(g,i){g.time=addMin(s.start,s.interval*i)});touch();render();toast('已更新場次時間')}}),
+    h('button',{text:'複製為下週班表',onclick:function(){newSched(s)}})));
+  return c;
+}
+function refSelect(val,onch){var sel=h('select',{onchange:function(e){onch(e.target.value)}});sel.appendChild(h('option',{value:'',text:'— 選擇裁判 —'}));var names=state.referees.slice();if(val&&names.indexOf(val)<0)names.push(val);names.forEach(function(n){sel.appendChild(h('option',{value:n,text:n}))});sel.value=val||'';return sel}
+function tableCard(s,A){
+  var c=h('div',{class:'card'},h('h2',null,'排班',h('small',{text:'勾「固定」的場次，自動排班時不會被更動'})));
+  var t=h('table',null,h('tr',null,h('th',{text:'場次'}),h('th',{text:'時間'}),h('th',{text:'裁判 1'}),h('th',{text:'裁判 2'}),h('th',{text:'固定'})));
+  s.games.forEach(function(g,i){var e=A.rowErr[i].filter(function(x){return x!=='尚未排滿'});
+    t.appendChild(h('tr',{class:e.length?'bad':''},h('td',{class:'n',text:String(i+1)}),
+      h('td',null,h('input',{class:'t',type:'text',inputmode:'numeric',placeholder:'08:00',value:g.time,onchange:function(ev){g.time=normTime(ev.target.value)||g.time;touch();render()}})),
+      h('td',null,refSelect(g.a,function(v){g.a=v;touch();render()})),
+      h('td',null,refSelect(g.b,function(v){g.b=v;touch();render()}),e.length?h('div',{class:'msg',text:e.join('；')}):null),
+      h('td',{style:'text-align:center'},h('input',{type:'checkbox',class:'lock',checked:g.lock,onchange:function(ev){g.lock=ev.target.checked;touch()}}))));
+  });
+  c.appendChild(t);
+  var info=h('div',{class:'note',style:'margin-top:8px'});
+  c.appendChild(h('div',{class:'row',style:'margin-top:12px'},
+    h('button',{class:'pri',text:'⚡ 自動排班',onclick:function(){run(false)}}),
+    h('button',{text:'換一個排法',onclick:function(){run(true)}}),
+    h('button',{text:'清空未固定',onclick:function(){s.games.forEach(function(g){if(!g.lock){g.a='';g.b=''}});touch();render()}})));
+  c.appendChild(info);
+  function run(sh){var r=solve(s,sh);if(!r){toast('至少需要 2 位裁判');return}if(r.fail){toast(r.fail);return}s.games.forEach(function(g,i){g.a=r.pick[i][0];g.b=r.pick[i][1]});touch();render();toast('已自動排班')}
+  info.textContent='自動排班規則：每人以連續站兩場為原則，避開「不可同場」與「不可排場次」，並平均分配場數。場數為奇數時，會有人只站單場，優先排在第一場或最後一場。';
+  return c;
+}
+function statCard(s,A){
+  var c=h('div',{class:'card'},h('h2',{text:'出勤統計'}));
+  var t=h('table',{class:'stat'},h('tr',null,h('th',{text:'裁判'}),h('th',{text:'場數'}),h('th',{text:'場次'})));
+  A.stats.forEach(function(r){if(!r.games.length&&state.referees.indexOf(r.name)<0)return;
+    var tags=[];r.runs.forEach(function(x){if(x.length===1)tags.push(h('span',{class:'tag w',text:'第'+x[0]+'場單場'}));else if(x.length>2)tags.push(h('span',{class:'tag e',text:'連站'+x.length+'場'}))});
+    t.appendChild(h('tr',null,h('td',{text:r.name}),h('td',{text:String(r.games.length)}),h('td',null,r.runs.map(function(x){return x.length>1?x[0]+'–'+x[x.length-1]:String(x[0])}).join('、')||'—',tags)))});
+  c.appendChild(t);
+  var errs=A.rowErr.reduce(function(n,e){return n+e.filter(function(x){return x!=='尚未排滿'}).length},0), empty=A.rowErr.filter(function(e){return e.indexOf('尚未排滿')>=0}).length;
+  c.appendChild(h('div',{style:'margin-top:10px'},errs?h('span',{class:'tag e',text:errs+' 項衝突'}):h('span',{class:'tag o',text:'✓ 無衝突'}),empty?h('span',{class:'tag w',text:empty+' 場未排滿'}):null));
+  return c;
+}
+function outCard(s){
+  var c=h('div',{class:'card'},h('h2',null,'輸出',h('small',{text:'可直接貼到 LINE'})));
+  var txt=lineText(s);c.appendChild(h('pre',{text:txt}));
+  var row=h('div',{class:'row'});
+  row.appendChild(h('button',{class:'pri',text:'複製文字',onclick:function(){try{navigator.clipboard.writeText(txt).then(function(){toast('已複製')},function(){fallbackCopy(txt)})}catch(e){fallbackCopy(txt)}}}));
+  row.appendChild(h('button',{text:'下載 CSV',onclick:function(){dl('裁判排班_'+(s.date||'')+'_'+(s.venue||'')+'.csv',csv(s),'text/csv')}}));
+  c.appendChild(row);return c;
+}
+function condCard(s){
+  var c=h('div',{class:'card'},h('h2',{text:'排班條件'}));
+  // pairs
+  c.appendChild(h('div',{class:'fld',style:'margin-bottom:6px'},'不可同場的組合（所有班表適用）'));
+  var chips=h('div',{class:'chips',style:'margin-bottom:8px'});
+  state.pairs.forEach(function(p,i){chips.appendChild(h('span',{class:'chip x'},p[0]+' ✕ '+p[1],h('button',{text:'×',title:'移除',onclick:function(){state.pairs.splice(i,1);touch();render()}})))});
+  if(!state.pairs.length)chips.appendChild(h('span',{class:'note',text:'無'}));
+  c.appendChild(chips);
+  var pa=refSelect('',function(){}),pb=refSelect('',function(){});pa.style.width=pb.style.width='130px';
+  c.appendChild(h('div',{class:'row'},pa,h('span',{text:'✕'}),pb,h('button',{text:'加入',onclick:function(){var a=pa.value,b=pb.value;if(!a||!b||a===b){toast('請選兩位不同的裁判');return}if(forbid(a,b)){toast('已經有這個組合');return}state.pairs.push([a,b]);touch();render()}})));
+  // unavailable
+  c.appendChild(h('div',{class:'fld',style:'margin:16px 0 6px'},'本日不可排的場次（例：4,5 或 1-3）'));
+  var row=h('div',{class:'row'});
+  state.referees.forEach(function(r){row.appendChild(h('label',{class:'fld'},r,h('input',{style:'width:110px',placeholder:'—',value:(s.unavail||{})[r]||'',onchange:function(e){s.unavail=s.unavail||{};if(e.target.value.trim())s.unavail[r]=e.target.value.trim();else delete s.unavail[r];touch();render()}})))});
+  c.appendChild(row);return c;
+}
+function refCard(){
+  var c=h('div',{class:'card'},h('h2',null,'裁判名單',h('small',{text:'下拉選單會使用這份名單'})));
+  var chips=h('div',{class:'chips',style:'margin-bottom:10px'});
+  state.referees.forEach(function(r,i){chips.appendChild(h('span',{class:'chip'},r,h('button',{text:'×',title:'移除',onclick:function(){ask('從名單移除「'+r+'」？已排的班表不會被改動。','移除',function(){state.referees.splice(i,1);touch();render()})}})))});
+  c.appendChild(chips);
+  var inp=h('input',{placeholder:'輸入姓名',style:'width:150px'});
+  function add(){var v=inp.value.trim();if(!v)return;if(state.referees.indexOf(v)>=0){toast('名單已有此人');return}state.referees.push(v);touch();render()}
+  inp.addEventListener('keydown',function(e){if(e.key==='Enter')add()});
+  c.appendChild(h('div',{class:'row'},inp,h('button',{text:'＋ 新增裁判',onclick:add})));
+  return c;
+}
+
+document.body.appendChild(h('div',{id:'toast',class:'toast'}));
+document.body.appendChild(h('div',{id:'modal',class:'modal'},h('div',{class:'box'})));
+render();
+if(storeOK)persist();updStatus();
+})();
+</script>
+</body>
+</html>
